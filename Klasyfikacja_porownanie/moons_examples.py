@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+
 from sklearn.metrics import accuracy_score, classification_report
 
 from commons.utils import plot_decision_boundary, parse_experiment_ranges
@@ -16,6 +18,7 @@ import argparse
 AVAILABLE_EXPERIMENTS = {
     1:"Regresja Logistyczna",
     2:"k-NN",
+    3:"Maszyna Wektorów Nośnych (SVM) - RFB",
     
 }
 
@@ -76,7 +79,21 @@ def main(args):
         # --- Wizualizacja granicy decyzyjnej ---
         plot_decision_boundary(knn, X_train_scaled, y_train, "Granica decyzyjna - k-NN (k=7)")
 
-    
+    if 3 in experiments_to_run:
+        print("------\n3. Maszyna Wektorów Nośnych (SVM) - RFB")
+        # Używamy jądra RBF, które jest idealne do problemów nieliniowych.
+        svm_clf = SVC(kernel='rbf', gamma='auto', random_state=42)
+        svm_clf.fit(X_train_scaled, y_train)
+        print(f"Dokładność SVM na danych testowych: {svm_clf.score(X_test_scaled, y_test):.3f}")
+        y_pred_svn = svm_clf.predict(X_test_scaled)
+        print(f"Dokładność (Accuracy): {accuracy_score(y_test, y_pred_svn):.2f}")
+        print("\nRaport klasyfikacji:")
+        print(classification_report(y_test, y_pred_svn))
+        # Wizualizacja granicy decyzyjnej
+        plot_decision_boundary(svm_clf, X_train_scaled, y_train, "Granica decyzyjna - SVM z jądrem RBF")
+
+
+
     print("\nZakończono wybrane eksperymenty.")
 
 if __name__ == "__main__":

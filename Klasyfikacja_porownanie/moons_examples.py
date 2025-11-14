@@ -7,6 +7,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.cluster import KMeans
+
 
 from sklearn.metrics import accuracy_score, classification_report
 
@@ -19,6 +23,11 @@ AVAILABLE_EXPERIMENTS = {
     1:"Regresja Logistyczna",
     2:"k-NN",
     3:"Maszyna Wektorów Nośnych (SVM) - RFB",
+    4:"Przeuczone Drzewo Decyzyjne",
+    5:"Przycięte Drzewo Decyzyjne",
+    6:"Las Losowy",
+    7:"k-Means z K=2",
+
     
 }
 
@@ -92,6 +101,72 @@ def main(args):
         # Wizualizacja granicy decyzyjnej
         plot_decision_boundary(svm_clf, X_train_scaled, y_train, "Granica decyzyjna - SVM z jądrem RBF")
 
+    if 4 in experiments_to_run:
+        print("------\n4. Przeuczone Drzewo Decyzyjne")
+        tree_overfit = DecisionTreeClassifier(random_state=42)
+        tree_overfit.fit(X_train_scaled, y_train)
+        # Porównujemy wyniki na zbiorze treningowym i testowym
+        print(f"Dokładność na zbiorze TRENINGOWYM: {tree_overfit.score(X_train_scaled, y_train):.3f}")
+        print(f"Dokładność na zbiorze TESTOWYM:    {tree_overfit.score(X_test_scaled, y_test):.3f}")
+        y_pred_tree = tree_overfit.predict(X_test_scaled)
+        print(f"Dokładność (Accuracy): {accuracy_score(y_test, y_pred_tree):.2f}")
+        print("\nRaport klasyfikacji:")
+        print(classification_report(y_test, y_pred_tree))
+        # Wizualizacja - zobaczymy "poszarpaną" granicę
+        plot_decision_boundary(tree_overfit, X_train_scaled, y_train, "Granica decyzyjna - Przeuczone Drzewo Decyzyjne")
+
+    if 5 in experiments_to_run:
+        print("------\n5. Przycięte Drzewo Decyzyjne")
+        # Ograniczamy głębokość drzewa, aby zapobiec przeuczeniu i poprawić generalizację.
+        tree_pruned = DecisionTreeClassifier(max_depth=5, random_state=42)
+        tree_pruned.fit(X_train_scaled, y_train)
+        print(f"Dokładność na zbiorze TRENINGOWYM: {tree_pruned.score(X_train_scaled, y_train):.3f}")
+        print(f"Dokładność na zbiorze TESTOWYM:    {tree_pruned.score(X_test_scaled, y_test):.3f}")
+        y_pred_treep = tree_pruned.predict(X_test_scaled)
+        print(f"Dokładność (Accuracy): {accuracy_score(y_test, y_pred_treep):.2f}")
+        print("\nRaport klasyfikacji:")
+        print(classification_report(y_test, y_pred_treep))
+        # Wizualizacja - granica będzie "schodkowa", ale bardziej regularna
+        plot_decision_boundary(tree_pruned, X_train_scaled, y_train, "Granica decyzyjna - Drzewo (max_depth=5)")
+
+    if 6 in experiments_to_run:
+        print("------\n6. Las Losowy")
+        # Używamy wielu drzew, aby uzyskać jeszcze lepszy i gładszy model.
+        # n_estimators=100 oznacza, że nasz las będzie się składał ze 100 drzew
+        forest = RandomForestClassifier(n_estimators=100, random_state=42)
+        forest.fit(X_train_scaled, y_train)
+        print(f"Dokładność na zbiorze TRENINGOWYM: {forest.score(X_train_scaled, y_train):.3f}")
+        print(f"Dokładność na zbiorze TESTOWYM:    {forest.score(X_test_scaled, y_test):.3f}")
+        y_pred_forest = forest.predict(X_test_scaled)
+        print(f"Dokładność (Accuracy): {accuracy_score(y_test, y_pred_forest):.2f}")
+        print("\nRaport klasyfikacji:")
+        print(classification_report(y_test, y_pred_forest))
+        # Wizualizacja - granica będzie znacznie gładsza i bardziej stabilna
+        plot_decision_boundary(forest, X_train_scaled, y_train, "Granica decyzyjna - Las Losowy")
+
+    if 7 in experiments_to_run:
+        print("------\n7. k-Means z K=2")
+        # Budujemy model k-Means z K=2
+        kmeans_moons = KMeans(n_clusters=2, random_state=42, n_init=10)
+        predicted_clusters = kmeans_moons.fit_predict(X_scaled)
+        # Pobranie współrzędnych centroid z wytrenowanego modelu
+        centroids_moons = kmeans_moons.cluster_centers_
+        # Wyświetlenie współrzędnych centroid (opcjonalnie, dla ciekawości)
+        print("Współrzędne znalezionych centroid:")
+        print(centroids_moons)
+        # Wizualizacja wyników
+        plt.figure(figsize=(10, 7))
+        # Rysowanie punktów danych pokolorowanych według znalezionego klastra
+        plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=predicted_clusters, 
+                    cmap='viridis', s=50, label='Dane')
+        plt.scatter(centroids_moons[:, 0], centroids_moons[:, 1], s=300, c='red', 
+                    marker='X', label='Centroidy')
+        plt.title('Wynik działania k-Means na zbiorze "moons" (z widocznymi centroidami)')
+        plt.xlabel("Cecha 1 (skalowana)")
+        plt.ylabel("Cecha 2 (skalowana)")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
 
     print("\nZakończono wybrane eksperymenty.")

@@ -11,6 +11,12 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import KMeans
 
+from sklearn.linear_model import Perceptron
+from sklearn.neural_network import MLPClassifier
+
+# Narzędzia z Keras/TensorFlow
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
 
 from sklearn.metrics import accuracy_score, classification_report
 
@@ -27,7 +33,9 @@ AVAILABLE_EXPERIMENTS = {
     5:"Przycięte Drzewo Decyzyjne",
     6:"Las Losowy",
     7:"k-Means z K=2",
-
+    8:"Perceptron (Scikit-learn)",
+    9:"MLP (Scikit-learn)",
+    10:"MLP (Keras/TensorFlow)"
     
 }
 
@@ -167,6 +175,73 @@ def main(args):
         plt.legend()
         plt.grid(True)
         plt.show()
+
+
+    if 8 in experiments_to_run:
+        print("------\n8. Perceptron (Scikit-learn)")
+        # --- Perceptron (model liniowy) ---
+        perceptron = Perceptron(random_state=42)
+        perceptron.fit(X_train_scaled, y_train)
+        print(f"Dokładność Perceptronu na danych testowych: {perceptron.score(X_test_scaled, y_test):.3f}")
+        y_pred_perc = perceptron.predict(X_test_scaled)
+        print(f"Dokładność (Accuracy): {accuracy_score(y_test, y_pred_perc):.2f}")
+        print("\nRaport klasyfikacji:")
+        print(classification_report(y_test, y_pred_perc))
+        plot_decision_boundary(perceptron, X_train_scaled, y_train, "Granica decyzyjna - Perceptron")
+
+    if 9 in experiments_to_run:
+        print("------\n9. MLP (Scikit-learn)")
+        # --- Perceptron Wielowarstwowy (MLP w Scikit-learn) ---
+        mlp_sklearn = MLPClassifier(hidden_layer_sizes=(10, 5), max_iter=1000, random_state=42)
+        mlp_sklearn.fit(X_train_scaled, y_train)
+        print(f"Dokładność MLP (Scikit-learn) na danych testowych: {mlp_sklearn.score(X_test_scaled, y_test):.3f}")
+        y_pred_mlp = mlp_sklearn.predict(X_test_scaled)
+        print(f"Dokładność (Accuracy): {accuracy_score(y_test, y_pred_mlp):.2f}")
+        print("\nRaport klasyfikacji:")
+        print(classification_report(y_test, y_pred_mlp))
+        plot_decision_boundary(mlp_sklearn, X_train_scaled, y_train, "Granica decyzyjna - MLP (Scikit-learn)")
+
+    if 10 in experiments_to_run:
+        print("------\n10. MLP (Keras/TensorFlow)")
+        # --- Perceptron Wielowarstwowy (MLP w Keras/TensorFlow) ---
+
+        import tensorflow as tf
+        tf.random.set_seed(42)
+
+        # 1. Definicja modelu
+        model_keras = Sequential([
+            Dense(16, activation='relu', input_shape=(2,)),
+            Dense(8, activation='relu'),
+            Dense(1, activation='sigmoid')
+            # Dense(10, activation='relu', input_shape=(2,)),
+            # Dense(5, activation='relu'),
+            # Dense(1, activation='sigmoid')
+        ])
+
+        # 2. Kompilacja modelu
+        model_keras.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+        # 3. Trening modelu
+        model_keras.fit(X_train_scaled, y_train, epochs=100, verbose=0)
+        # print("Rozpoczynanie dłuższego treningu...")
+        # model_keras.fit(X_train_scaled, y_train, epochs=500, verbose=0, batch_size=32)
+        
+        # 4. Ocena modelu
+        loss, accuracy = model_keras.evaluate(X_test_scaled, y_test, verbose=0)
+        print(f"Dokładność MLP (Keras) na danych testowych: {accuracy:.3f}")
+        y_pred_keras = (model_keras.predict(X_test_scaled, verbose=0) > 0.5).astype(int)
+        print(f"Dokładność (Accuracy): {accuracy_score(y_test, y_pred_keras):.2f}")        
+        print("\nRaport klasyfikacji - MLP (Keras):")
+        print(classification_report(y_test, y_pred_keras))
+
+        # 5. Wizualizacja - potrzebujemy małej klasy "opakowującej" model Keras
+        class KerasModelWrapper:
+            def __init__(self, model):
+                self.model = model
+            def predict(self, X):
+                return (self.model.predict(X, verbose=0) > 0.5).astype(int).flatten()
+
+        plot_decision_boundary(KerasModelWrapper(model_keras), X_train_scaled, y_train, "Granica decyzyjna - MLP (Keras)")
 
 
     print("\nZakończono wybrane eksperymenty.")

@@ -77,7 +77,7 @@ ds_test = ds_test.batch(32).prefetch(tf.data.AUTOTUNE)
 
 
 # --- Wizualizacja przykładowego spektrogramu ---
-for example_spectrogram, example_label in ds_train.take(1):
+for example_spectrogram, example_label in ds_train.take(5):
     plt.figure(figsize=(10, 4))
     plt.imshow(tf.math.log(example_spectrogram[0, :, :, 0] + 1e-6).numpy().T, aspect='auto', origin='lower')
     plt.title(f'Spektrogram dla komendy: "{commands[example_label[0]]}"')
@@ -127,7 +127,7 @@ loss, accuracy = model_audio.evaluate(ds_test, verbose=0)
 print(f"Dokładność modelu na danych testowych: {accuracy:.3f}")
 
 # Wybierzmy losowy przykład ze zbioru testowego
-for test_spectrogram, test_label in ds_test.take(1):
+for test_spectrogram, test_label in ds_test.take(5):
     sample_spectrogram_batch = test_spectrogram[:1] # Bierzemy pierwszy element z partii
     true_label_idx = test_label[0].numpy()
 

@@ -101,4 +101,4 @@ def testSimilarity(user_input = "Lubię spędzać czas na łonie natury."):
 
 
 if __name__ == "__main__":
-    testSimilarity("Mam plan na weekend!")
+    testSimilarity()#"Mam plan na weekend!")
